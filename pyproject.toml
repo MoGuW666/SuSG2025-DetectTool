@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "susg-detecttool"
+version = "0.1.0"
+description = "Linux OS abnormal log detection tool (OOM/Oops/Panic/Reboot/FS...)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "typer>=0.12",
+  "PyYAML>=6.0",
+  "rich>=13.0",
+]
+
+[project.scripts]
+detecttool = "detecttool.cli:app"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

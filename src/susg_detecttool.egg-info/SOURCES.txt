@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+src/detecttool/__init__.py
+src/detecttool/cli.py
+src/detecttool/config.py
+src/detecttool/engine.py
+src/detecttool/sources/__init__.py
+src/detecttool/sources/file_follow.py
+src/susg_detecttool.egg-info/PKG-INFO
+src/susg_detecttool.egg-info/SOURCES.txt
+src/susg_detecttool.egg-info/dependency_links.txt
+src/susg_detecttool.egg-info/entry_points.txt
+src/susg_detecttool.egg-info/requires.txt
+src/susg_detecttool.egg-info/top_level.txt

@@ -1,0 +1,40 @@
+version: 1
+rules:
+  - id: oom_basic
+    type: OOM
+    severity: high
+    keywords_any: ["Out of memory", "Killed process", "oom-kill"]
+    regex_any:
+      - 'Killed process (?P<pid>\d+)\s+\((?P<comm>[^)]+)\)'
+    cooldown_seconds: 30
+
+  - id: oops_basic
+    type: OOPS
+    severity: high
+    keywords_any: ["Oops:", "BUG:", "Unable to handle kernel"]
+
+  - id: panic_basic
+    type: PANIC
+    severity: critical
+    keywords_any: ["Kernel panic - not syncing"]
+
+  - id: reboot_basic
+    type: REBOOT
+    severity: medium
+    keywords_any: ["reboot:", "Restarting system"]
+
+  - id: fs_exception_basic
+    type: FS_EXCEPTION
+    severity: high
+    keywords_any: ["EXT4-fs error", "XFS (", "BTRFS error", "Buffer I/O error", "I/O error"]
+
+  - id: deadlock_hung_task
+    type: DEADLOCK
+    severity: high
+    keywords_any: ["blocked for more than", "hung task", "hung_task"]
+    regex_any:
+      - 'INFO:\s+task\s+(?P<comm>.+):(?P<pid>\d+)\s+blocked for more than\s+(?P<secs>\d+)\s+seconds'
+      - 'task\s+(?P<comm>.+):(?P<pid>\d+)\s+blocked for more than\s+(?P<secs>\d+)\s+seconds'
+    cooldown_seconds: 60
+
+
