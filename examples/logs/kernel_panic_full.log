@@ -1,0 +1,46 @@
+Dec 25 10:23:45 dbserver kernel: [98765.432100] BUG: unable to handle kernel NULL pointer dereference at 0000000000000008
+Dec 25 10:23:45 dbserver kernel: [98765.432101] IP: [<ffffffff81234567>] __ext4_get_inode_loc+0x42/0x2e0
+Dec 25 10:23:45 dbserver kernel: [98765.432102] PGD 0
+Dec 25 10:23:45 dbserver kernel: [98765.432103] Oops: 0000 [#1] SMP
+Dec 25 10:23:45 dbserver kernel: [98765.432104] Modules linked in: xt_CHECKSUM iptable_mangle ipt_MASQUERADE nf_nat_masquerade_ipv4 iptable_nat nf_nat_ipv4 nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_conntrack nf_conntrack ipt_REJECT nf_reject_ipv4 tun bridge stp llc ebtable_filter ebtables ip6table_filter ip6_tables devlink iptable_filter sunrpc intel_rapl sb_edac x86_pkg_temp_thermal intel_powerclamp coretemp kvm_intel kvm irqbypass crct10dif_pclmul crc32_pclmul ghash_clmulni_intel pcbc aesni_intel crypto_simd glue_helper cryptd iTCO_wdt iTCO_vendor_support mei_me pcspkr sg mei i2c_i801 lpc_ich shpchp wmi ipmi_si ipmi_devintf ipmi_msghandler acpi_pad acpi_power_meter nfsd auth_rpcgss nfs_acl lockd grace sunrpc ip_tables xfs libcrc32c sd_mod crc_t10dif crct10dif_common mgag200 drm_kms_helper syscopyarea sysfillrect sysimgblt fb_sys_fops ttm drm
+Dec 25 10:23:45 dbserver kernel: [98765.432105]  crc32c_intel ahci libahci libata megaraid_sas i2c_core dm_mirror dm_region_hash dm_log dm_mod
+Dec 25 10:23:45 dbserver kernel: [98765.432106] CPU: 4 PID: 12890 Comm: mysqld Not tainted 4.18.0-425.el8.x86_64 #1
+Dec 25 10:23:45 dbserver kernel: [98765.432107] Hardware name: Dell Inc. PowerEdge R640/0H28RR, BIOS 2.10.0 11/12/2020
+Dec 25 10:23:45 dbserver kernel: [98765.432108] RIP: 0010:__ext4_get_inode_loc+0x42/0x2e0
+Dec 25 10:23:45 dbserver kernel: [98765.432109] Code: 48 8b 43 08 48 89 df 48 8b 80 88 01 00 00 48 85 c0 0f 84 a8 01 00 00 48 8b 40 28 48 85 c0 0f 84 9c 01 00 00 0f b6 40 50 41 89 c5 <41> 8b 44 24 08 85 c0 0f 84 88 01 00 00 49 8b 44 24 10 48 85 c0 0f
+Dec 25 10:23:45 dbserver kernel: [98765.432110] RSP: 0018:ffffb2e4c3a47b68 EFLAGS: 00010202
+Dec 25 10:23:45 dbserver kernel: [98765.432111] RAX: 0000000000000000 RBX: ffff9a8e3c2d5800 RCX: 0000000000000000
+Dec 25 10:23:45 dbserver kernel: [98765.432112] RDX: 0000000000000000 RSI: ffff9a8e3c2d5800 RDI: ffff9a8e3c2d5800
+Dec 25 10:23:45 dbserver kernel: [98765.432113] RBP: ffffb2e4c3a47ba8 R08: 0000000000000001 R09: 0000000000000000
+Dec 25 10:23:45 dbserver kernel: [98765.432114] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000000
+Dec 25 10:23:45 dbserver kernel: [98765.432115] R13: 0000000000000000 R14: ffff9a8e00000000 R15: 0000000000000000
+Dec 25 10:23:45 dbserver kernel: [98765.432116] FS:  00007f8a2c8fd700(0000) GS:ffff9a8f1fd00000(0000) knlGS:0000000000000000
+Dec 25 10:23:45 dbserver kernel: [98765.432117] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+Dec 25 10:23:45 dbserver kernel: [98765.432118] CR2: 0000000000000008 CR3: 0000000c2e0a6006 CR4: 00000000007606e0
+Dec 25 10:23:45 dbserver kernel: [98765.432119] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+Dec 25 10:23:45 dbserver kernel: [98765.432120] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Dec 25 10:23:45 dbserver kernel: [98765.432121] PKRU: 55555554
+Dec 25 10:23:45 dbserver kernel: [98765.432122] Call Trace:
+Dec 25 10:23:45 dbserver kernel: [98765.432123]  ext4_reserve_inode_write+0x2d/0xa0
+Dec 25 10:23:45 dbserver kernel: [98765.432124]  ext4_mark_inode_dirty+0x52/0x1e0
+Dec 25 10:23:45 dbserver kernel: [98765.432125]  ext4_dirty_inode+0x48/0x70
+Dec 25 10:23:45 dbserver kernel: [98765.432126]  __mark_inode_dirty+0x17f/0x350
+Dec 25 10:23:45 dbserver kernel: [98765.432127]  generic_update_time+0x87/0xe0
+Dec 25 10:23:45 dbserver kernel: [98765.432128]  file_update_time+0xc0/0x110
+Dec 25 10:23:45 dbserver kernel: [98765.432129]  ext4_file_write_iter+0x8c/0x3e0
+Dec 25 10:23:45 dbserver kernel: [98765.432130]  __vfs_write+0x119/0x1a0
+Dec 25 10:23:45 dbserver kernel: [98765.432131]  vfs_write+0xb9/0x1b0
+Dec 25 10:23:45 dbserver kernel: [98765.432132]  ksys_write+0x5c/0xe0
+Dec 25 10:23:45 dbserver kernel: [98765.432133]  do_syscall_64+0x5b/0x1f0
+Dec 25 10:23:45 dbserver kernel: [98765.432134]  entry_SYSCALL_64_after_hwframe+0x65/0xca
+Dec 25 10:23:45 dbserver kernel: [98765.432135] RIP: 0033:0x7f8a3d4e8574
+Dec 25 10:23:45 dbserver kernel: [98765.432136] Code: 00 f7 d8 64 89 02 48 c7 c0 ff ff ff ff eb b3 0f 1f 80 00 00 00 00 48 8d 05 d9 5c 0d 00 8b 00 85 c0 75 13 b8 01 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 54 c3 0f 1f 00 41 54 49 89 d4 55 48 89 f5 53
+Dec 25 10:23:45 dbserver kernel: [98765.432137] RSP: 002b:00007f8a2c8fcc88 EFLAGS: 00000246 ORIG_RAX: 0000000000000001
+Dec 25 10:23:45 dbserver kernel: [98765.432138] RAX: ffffffffffffffda RBX: 00007f8a1c0012a0 RCX: 00007f8a3d4e8574
+Dec 25 10:23:45 dbserver kernel: [98765.432139] RDX: 0000000000004000 RSI: 00007f8a1c001000 RDI: 0000000000000045
+Dec 25 10:23:45 dbserver kernel: [98765.432140] RBP: 00007f8a1c001000 R08: 0000000000000000 R09: 00007f8a2c8fcb20
+Dec 25 10:23:45 dbserver kernel: [98765.432141] R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000004000
+Dec 25 10:23:45 dbserver kernel: [98765.432142] R13: 00007f8a1c0012a0 R14: 0000000000004000 R15: 00007f8a1c001000
+Dec 25 10:23:45 dbserver kernel: [98765.432143] Kernel panic - not syncing: Fatal exception
+Dec 25 10:23:45 dbserver kernel: [98765.432144] Kernel Offset: disabled
+Dec 25 10:23:45 dbserver kernel: [98765.432145] ---[ end Kernel panic - not syncing: Fatal exception ]---

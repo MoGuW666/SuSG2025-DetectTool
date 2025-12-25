@@ -1,0 +1,46 @@
+Dec 25 12:00:15 fileserver kernel: [456789.015234] EXT4-fs error (device sda1): ext4_validate_block_bitmap:376: comm kworker/u16:0: bg 1234: bad block bitmap checksum
+Dec 25 12:00:15 fileserver kernel: [456789.015345] EXT4-fs error (device sda1): ext4_validate_block_bitmap:380: comm kworker/u16:0: bg 1234: block 40960: invalid block bitmap
+Dec 25 12:00:16 fileserver kernel: [456789.016456] Aborting journal on device sda1-8.
+Dec 25 12:00:16 fileserver kernel: [456789.016567] EXT4-fs (sda1): Remounting filesystem read-only
+Dec 25 12:00:16 fileserver kernel: [456789.016678] EXT4-fs (sda1): previous I/O error to superblock detected
+Dec 25 12:05:30 fileserver kernel: [456789.330890] XFS (sdb1): Metadata I/O Error: block 0x123456 ("xlog_iodone") error 5 numblks 64
+Dec 25 12:05:30 fileserver kernel: [456789.331001] XFS (sdb1): xfs_do_force_shutdown(0x2) called from line 1234 of file fs/xfs/xfs_log.c. Return address = 0xffffffffa1234567
+Dec 25 12:05:30 fileserver kernel: [456789.331112] XFS (sdb1): Log I/O Error Detected. Shutting down filesystem
+Dec 25 12:05:30 fileserver kernel: [456789.331223] XFS (sdb1): Please unmount the filesystem and rectify the problem(s)
+Dec 25 12:10:45 fileserver kernel: [456789.645456] BTRFS error (device sdc1): bdev /dev/sdc1 errs: wr 0, rd 1, flush 0, corrupt 2, gen 0
+Dec 25 12:10:45 fileserver kernel: [456789.645567] BTRFS error (device sdc1): unable to read tree root on logical 4194304 mirror 1
+Dec 25 12:10:45 fileserver kernel: [456789.645678] BTRFS error (device sdc1): failed to read block groups: -5
+Dec 25 12:10:45 fileserver kernel: [456789.645789] BTRFS error (device sdc1): open_ctree failed
+Dec 25 12:15:22 fileserver kernel: [456789.922345] Buffer I/O error on dev sdd1, logical block 123456, async page read
+Dec 25 12:15:22 fileserver kernel: [456789.922456] Buffer I/O error on dev sdd1, logical block 123457, async page read
+Dec 25 12:15:22 fileserver kernel: [456789.922567] Buffer I/O error on dev sdd1, logical block 123458, async page read
+Dec 25 12:15:22 fileserver kernel: [456789.922678] sd 2:0:0:0: [sdd] tag#0 FAILED Result: hostbyte=DID_BAD_TARGET driverbyte=DRIVER_OK cmd_age=0s
+Dec 25 12:15:22 fileserver kernel: [456789.922789] sd 2:0:0:0: [sdd] tag#0 CDB: Read(10) 28 00 00 01 e2 40 00 00 08 00
+Dec 25 12:15:22 fileserver kernel: [456789.922890] I/O error, dev sdd, sector 123456 op 0x0:(READ) flags 0x80700 phys_seg 1 prio class 0
+Dec 25 12:20:00 fileserver kernel: [456790.200123] EXT4-fs error (device dm-0): ext4_mb_generate_buddy:754: group 256, block bitmap and bg descriptor inconsistent: 25600 vs 25601 free clusters
+Dec 25 12:20:00 fileserver kernel: [456790.200234] EXT4-fs error (device dm-0): ext4_discard_preallocations:4567: comm postgres: Error loading buddy information for 256
+Dec 25 12:25:15 fileserver kernel: [456790.515456] JBD2: Detected IO errors while flushing file data on dm-1-8
+Dec 25 12:25:15 fileserver kernel: [456790.515567] Aborting journal on device dm-1-8.
+Dec 25 12:25:15 fileserver kernel: [456790.515678] JBD2: Error -5 detected when updating journal superblock for dm-1-8.
+Dec 25 12:30:30 fileserver kernel: [456790.830890] XFS (dm-2): Internal error xfs_trans_cancel at line 983 of file fs/xfs/xfs_trans.c. Caller xfs_create+0x456/0x789 [xfs]
+Dec 25 12:30:30 fileserver kernel: [456790.831001] CPU: 2 PID: 45678 Comm: touch Tainted: G        W  OE     5.15.0-91-generic #101-Ubuntu
+Dec 25 12:30:30 fileserver kernel: [456790.831112] Hardware name: Dell Inc. PowerEdge R740/0WCJNT, BIOS 2.8.2 01/28/2020
+Dec 25 12:30:30 fileserver kernel: [456790.831223] Call Trace:
+Dec 25 12:30:30 fileserver kernel: [456790.831334]  <TASK>
+Dec 25 12:30:30 fileserver kernel: [456790.831445]  dump_stack_lvl+0x44/0x57
+Dec 25 12:30:30 fileserver kernel: [456790.831556]  xfs_corruption_error+0x8b/0xa0 [xfs]
+Dec 25 12:30:30 fileserver kernel: [456790.831667]  xfs_trans_cancel+0xef/0x120 [xfs]
+Dec 25 12:30:30 fileserver kernel: [456790.831778]  xfs_create+0x456/0x789 [xfs]
+Dec 25 12:30:30 fileserver kernel: [456790.831889]  </TASK>
+Dec 25 12:30:30 fileserver kernel: [456790.831990] XFS (dm-2): Corruption detected. Unmount and run xfs_repair
+Dec 25 12:35:45 fileserver kernel: [456791.145123] EXT4-fs (sde1): error count since last fsck: 157
+Dec 25 12:35:45 fileserver kernel: [456791.145234] EXT4-fs (sde1): initial error at time 1703491200: ext4_mb_generate_buddy:754
+Dec 25 12:35:45 fileserver kernel: [456791.145345] EXT4-fs (sde1): last error at time 1703492145: ext4_find_entry:1455
+Dec 25 12:40:00 fileserver kernel: [456791.400567] BTRFS warning (device sdf1): block group 123456789 has wrong amount of free space
+Dec 25 12:40:00 fileserver kernel: [456791.400678] BTRFS warning (device sdf1): failed to load free space cache for block group 123456789, rebuilding it now
+Dec 25 12:40:00 fileserver kernel: [456791.400789] BTRFS error (device sdf1): found 1234 extents, expected 5678
+Dec 25 12:45:15 fileserver kernel: [456791.715890] sd 3:0:0:0: [sdg] Sense Key : Medium Error [current]
+Dec 25 12:45:15 fileserver kernel: [456791.716001] sd 3:0:0:0: [sdg] Add. Sense: Unrecovered read error - auto reallocate failed
+Dec 25 12:45:15 fileserver kernel: [456791.716112] sd 3:0:0:0: [sdg] CDB: Read(10) 28 00 00 12 34 56 00 00 08 00
+Dec 25 12:45:15 fileserver kernel: [456791.716223] I/O error, dev sdg, sector 1193046 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+Dec 25 12:45:15 fileserver kernel: [456791.716334] Buffer I/O error on dev sdg1, logical block 1193038, async page read

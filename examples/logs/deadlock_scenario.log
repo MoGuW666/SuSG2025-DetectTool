@@ -1,0 +1,72 @@
+Dec 25 14:30:15 appserver kernel: [234567.890123] INFO: task kworker/u16:2:15234 blocked for more than 120 seconds.
+Dec 25 14:30:15 appserver kernel: [234567.890124]       Tainted: G           OE     5.15.0-91-generic #101-Ubuntu
+Dec 25 14:30:15 appserver kernel: [234567.890125] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Dec 25 14:30:15 appserver kernel: [234567.890126] task:kworker/u16:2   state:D stack:    0 pid:15234 ppid:     2 flags:0x00004000
+Dec 25 14:30:15 appserver kernel: [234567.890127] Workqueue: writeback wb_workfn (flush-8:0)
+Dec 25 14:30:15 appserver kernel: [234567.890128] Call Trace:
+Dec 25 14:30:15 appserver kernel: [234567.890129]  <TASK>
+Dec 25 14:30:15 appserver kernel: [234567.890130]  __schedule+0x2eb/0x980
+Dec 25 14:30:15 appserver kernel: [234567.890131]  schedule+0x5e/0xd0
+Dec 25 14:30:15 appserver kernel: [234567.890132]  io_schedule+0x42/0x70
+Dec 25 14:30:15 appserver kernel: [234567.890133]  bit_wait_io+0x11/0x60
+Dec 25 14:30:15 appserver kernel: [234567.890134]  __wait_on_bit+0x2e/0xa0
+Dec 25 14:30:15 appserver kernel: [234567.890135]  out_of_line_wait_on_bit+0x8c/0xb0
+Dec 25 14:30:15 appserver kernel: [234567.890136]  __filemap_fdatawait_range+0xf5/0x150
+Dec 25 14:30:15 appserver kernel: [234567.890137]  filemap_fdatawait_range+0x1e/0x30
+Dec 25 14:30:15 appserver kernel: [234567.890138]  sync_inodes_sb+0x23b/0x340
+Dec 25 14:30:15 appserver kernel: [234567.890139]  sync_filesystem+0x68/0xa0
+Dec 25 14:30:15 appserver kernel: [234567.890140]  </TASK>
+Dec 25 14:30:15 appserver kernel: [234567.890141] ---[ end trace 1234567890abcdef ]---
+Dec 25 14:30:35 appserver kernel: [234587.234567] INFO: task docker-containe:16789 blocked for more than 180 seconds.
+Dec 25 14:30:35 appserver kernel: [234587.234568]       Tainted: G           OE     5.15.0-91-generic #101-Ubuntu
+Dec 25 14:30:35 appserver kernel: [234587.234569] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Dec 25 14:30:35 appserver kernel: [234587.234570] task:docker-containe state:D stack:    0 pid:16789 ppid:  1234 flags:0x00000004
+Dec 25 14:30:35 appserver kernel: [234587.234571] Call Trace:
+Dec 25 14:30:35 appserver kernel: [234587.234572]  <TASK>
+Dec 25 14:30:35 appserver kernel: [234587.234573]  __schedule+0x2eb/0x980
+Dec 25 14:30:35 appserver kernel: [234587.234574]  schedule+0x5e/0xd0
+Dec 25 14:30:35 appserver kernel: [234587.234575]  schedule_preempt_disabled+0x14/0x20
+Dec 25 14:30:35 appserver kernel: [234587.234576]  __mutex_lock.constprop.0+0x2fb/0x4f0
+Dec 25 14:30:35 appserver kernel: [234587.234577]  __mutex_lock_slowpath+0x13/0x20
+Dec 25 14:30:35 appserver kernel: [234587.234578]  mutex_lock+0x34/0x40
+Dec 25 14:30:35 appserver kernel: [234587.234579]  overlay_get_redirect+0x45/0x180 [overlay]
+Dec 25 14:30:35 appserver kernel: [234587.234580]  ovl_lookup_single+0x12a/0x280 [overlay]
+Dec 25 14:30:35 appserver kernel: [234587.234581]  ovl_lookup+0x234/0x450 [overlay]
+Dec 25 14:30:35 appserver kernel: [234587.234582]  </TASK>
+Dec 25 14:30:35 appserver kernel: [234587.234583] ---[ end trace abcdef1234567890 ]---
+Dec 25 14:31:05 appserver kernel: [234617.567890] INFO: task systemd-journal:987 blocked for more than 240 seconds.
+Dec 25 14:31:05 appserver kernel: [234617.567891]       Tainted: G           OE     5.15.0-91-generic #101-Ubuntu
+Dec 25 14:31:05 appserver kernel: [234617.567892] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Dec 25 14:31:05 appserver kernel: [234617.567893] task:systemd-journal state:D stack:    0 pid:  987 ppid:     1 flags:0x00000000
+Dec 25 14:31:05 appserver kernel: [234617.567894] Call Trace:
+Dec 25 14:31:05 appserver kernel: [234617.567895]  <TASK>
+Dec 25 14:31:05 appserver kernel: [234617.567896]  __schedule+0x2eb/0x980
+Dec 25 14:31:05 appserver kernel: [234617.567897]  schedule+0x5e/0xd0
+Dec 25 14:31:05 appserver kernel: [234617.567898]  rwsem_down_write_slowpath+0x2a4/0x4e0
+Dec 25 14:31:05 appserver kernel: [234617.567899]  down_write+0x58/0x70
+Dec 25 14:31:05 appserver kernel: [234617.567900]  path_openat+0x7f2/0x1180
+Dec 25 14:31:05 appserver kernel: [234617.567901]  do_filp_open+0xaf/0x160
+Dec 25 14:31:05 appserver kernel: [234617.567902]  do_sys_openat2+0xaf/0x170
+Dec 25 14:31:05 appserver kernel: [234617.567903]  __x64_sys_openat+0x69/0xa0
+Dec 25 14:31:05 appserver kernel: [234617.567904]  do_syscall_64+0x5c/0xc0
+Dec 25 14:31:05 appserver kernel: [234617.567905]  entry_SYSCALL_64_after_hwframe+0x61/0xcb
+Dec 25 14:31:05 appserver kernel: [234617.567906]  </TASK>
+Dec 25 14:31:05 appserver kernel: [234617.567907] ---[ end trace fedcba0987654321 ]---
+Dec 25 14:31:25 appserver kernel: [234637.890123] INFO: task postgres:18456 blocked for more than 300 seconds.
+Dec 25 14:31:25 appserver kernel: [234637.890124]       Tainted: G           OE     5.15.0-91-generic #101-Ubuntu
+Dec 25 14:31:25 appserver kernel: [234637.890125] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Dec 25 14:31:25 appserver kernel: [234637.890126] task:postgres        state:D stack:    0 pid:18456 ppid:  1567 flags:0x00000000
+Dec 25 14:31:25 appserver kernel: [234637.890127] Call Trace:
+Dec 25 14:31:25 appserver kernel: [234637.890128]  <TASK>
+Dec 25 14:31:25 appserver kernel: [234637.890129]  __schedule+0x2eb/0x980
+Dec 25 14:31:25 appserver kernel: [234637.890130]  schedule+0x5e/0xd0
+Dec 25 14:31:25 appserver kernel: [234637.890131]  io_schedule+0x42/0x70
+Dec 25 14:31:25 appserver kernel: [234637.890132]  wait_on_page_bit+0x12a/0x2a0
+Dec 25 14:31:25 appserver kernel: [234637.890133]  generic_file_buffered_read+0x6f8/0xc00
+Dec 25 14:31:25 appserver kernel: [234637.890134]  new_sync_read+0x122/0x1b0
+Dec 25 14:31:25 appserver kernel: [234637.890135]  vfs_read+0xf5/0x180
+Dec 25 14:31:25 appserver kernel: [234637.890136]  ksys_read+0x67/0xe0
+Dec 25 14:31:25 appserver kernel: [234637.890137]  do_syscall_64+0x5c/0xc0
+Dec 25 14:31:25 appserver kernel: [234637.890138]  entry_SYSCALL_64_after_hwframe+0x61/0xcb
+Dec 25 14:31:25 appserver kernel: [234637.890139]  </TASK>
+Dec 25 14:31:25 appserver kernel: [234637.890140] ---[ end trace 5678901234abcdef ]---

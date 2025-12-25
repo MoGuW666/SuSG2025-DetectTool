@@ -1,0 +1,20 @@
+Dec 25 03:15:22 webserver kernel: [12345.678901] Node 0 DMA free:15872kB min:88kB low:108kB high:132kB
+Dec 25 03:15:22 webserver kernel: [12345.678902] lowmem_reserve[]: 0 3000 8000 8000
+Dec 25 03:15:22 webserver kernel: [12345.678903] Node 0 DMA32 free:102400kB min:16384kB low:20480kB high:24576kB
+Dec 25 03:15:22 webserver kernel: [12345.678904] Out of memory: Killed process 8234 (java) total-vm:4194304kB, anon-rss:2097152kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:23 webserver kernel: [12345.789012] oom_reaper: reaped process 8234 (java), now anon-rss:0kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:25 webserver kernel: [12346.012345] Out of memory: Killed process 8456 (mysql) total-vm:2097152kB, anon-rss:1048576kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:27 webserver kernel: [12346.234567] Out of memory: Killed process 8567 (python3) total-vm:524288kB, anon-rss:262144kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:28 webserver kernel: [12346.345678] oom_reaper: reaped process 8456 (mysql), now anon-rss:0kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:30 webserver kernel: [12346.567890] Out of memory: Killed process 8789 (redis-server) total-vm:1048576kB, anon-rss:524288kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:33 webserver kernel: [12346.890123] Out of memory: Killed process 8890 (nginx) total-vm:131072kB, anon-rss:65536kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:35 webserver kernel: [12347.012345] Out of memory: Killed process 9012 (python3) total-vm:262144kB, anon-rss:131072kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:38 webserver kernel: [12347.234567] Out of memory: Killed process 9123 (node) total-vm:1048576kB, anon-rss:524288kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:40 webserver kernel: [12347.456789] oom_reaper: reaped process 8567 (python3), now anon-rss:0kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:42 webserver kernel: [12347.678901] Out of memory: Killed process 9234 (java) total-vm:3145728kB, anon-rss:1572864kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:45 webserver kernel: [12347.890123] Out of memory: Killed process 9345 (postgres) total-vm:2097152kB, anon-rss:1048576kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:48 webserver kernel: [12348.012345] oom_reaper: reaped process 8789 (redis-server), now anon-rss:0kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:50 webserver kernel: [12348.234567] Out of memory: Killed process 9456 (chrome) total-vm:4194304kB, anon-rss:2097152kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:52 webserver kernel: [12348.456789] Memory cgroup out of memory: Killed process 9567 (docker) total-vm:524288kB, anon-rss:262144kB, file-rss:0kB, shmem-rss:0kB
+Dec 25 03:15:55 webserver kernel: [12348.678901] System is recovering, memory pressure reduced
+Dec 25 03:16:00 webserver kernel: [12349.012345] Normal operation resumed

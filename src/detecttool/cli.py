@@ -7,18 +7,27 @@ from rich.console import Console
 from rich.table import Table
 from .engine import detect_lines, Detector, MultiLineAggregator, Incident
 from .sources.file_follow import follow_file
-
 from .config import load_config
-from .engine import detect_lines
 
 app = typer.Typer(help="SuSG2025 DetectTool - Linux abnormal log detection")
 console = Console()
 
 
 def _iter_file_lines(path: str):
-    with open(path, "r", encoding="utf-8", errors="replace") as f:
-        for i, line in enumerate(f, start=1):
-            yield i, line
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            for i, line in enumerate(f, start=1):
+                yield i, line
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Log file not found: {path}\n"
+            f"Please check the file path and try again"
+        )
+    except PermissionError:
+        raise PermissionError(
+            f"Permission denied: {path}\n"
+            f"Please ensure you have read permission for this file"
+        )
 
 
 @app.command()
@@ -174,15 +183,14 @@ def stats(
     """
     cfg = load_config(config)
 
-    # Scan the log file
-    lines_iter = _iter_file_lines(file)
-    incidents = detect_lines(lines_iter, cfg.rules)
-
-    # Count total lines (get the last line number from incidents or re-scan)
-    # Re-scan to count lines (quick operation)
+    # Scan the log file (single pass)
     total_lines = 0
-    for line_no, _ in _iter_file_lines(file):
+    lines_with_tracking = []
+    for line_no, line in _iter_file_lines(file):
+        lines_with_tracking.append((line_no, line))
         total_lines = line_no
+
+    incidents = detect_lines(iter(lines_with_tracking), cfg.rules)
 
     # Generate statistics
     stats_data = _generate_statistics(incidents, total_lines, top_n=top)
