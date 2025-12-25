@@ -621,3 +621,6 @@ def service_status(
     for line in lines:
         console.print(f"[dim]{line}[/dim]")
 
+
+if __name__ == "__main__":
+    app()
