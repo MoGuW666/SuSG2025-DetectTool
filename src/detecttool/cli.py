@@ -36,8 +36,18 @@ def scan(
     config: str = typer.Option("configs/rules.yaml", "--config", "-c", help="Path to rules YAML"),
     json_out: bool = typer.Option(False, "--json", help="Output JSON instead of table"),
 ):
-    cfg = load_config(config)
-    incidents = detect_lines(_iter_file_lines(file), cfg.rules)
+    try:
+        cfg = load_config(config)
+        incidents = detect_lines(_iter_file_lines(file), cfg.rules)
+    except FileNotFoundError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
+    except PermissionError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[bold red]Configuration Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
 
     if json_out:
         print(json.dumps([x.to_dict() for x in incidents], ensure_ascii=False, indent=2))
@@ -73,7 +83,15 @@ def monitor(
     from_start: bool = typer.Option(False, "--from-start", help="Read file from beginning (default: follow new lines only)"),
     poll_interval: float = typer.Option(0.2, "--poll", help="Polling interval seconds for file follow"),
 ):
-    cfg = load_config(config)
+    try:
+        cfg = load_config(config)
+    except FileNotFoundError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[bold red]Configuration Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
+
     detector = Detector(cfg.rules)
     agg = MultiLineAggregator(detector)
     console.print(f"[green]Monitoring[/green] {file}  (Ctrl+C to stop)")
@@ -181,16 +199,26 @@ def stats(
 
     Provides statistics by type, severity, and top affected processes/PIDs.
     """
-    cfg = load_config(config)
+    try:
+        cfg = load_config(config)
 
-    # Scan the log file (single pass)
-    total_lines = 0
-    lines_with_tracking = []
-    for line_no, line in _iter_file_lines(file):
-        lines_with_tracking.append((line_no, line))
-        total_lines = line_no
+        # Scan the log file (single pass)
+        total_lines = 0
+        lines_with_tracking = []
+        for line_no, line in _iter_file_lines(file):
+            lines_with_tracking.append((line_no, line))
+            total_lines = line_no
 
-    incidents = detect_lines(iter(lines_with_tracking), cfg.rules)
+        incidents = detect_lines(iter(lines_with_tracking), cfg.rules)
+    except FileNotFoundError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
+    except PermissionError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[bold red]Configuration Error:[/bold red] {e}", style="red")
+        raise typer.Exit(1)
 
     # Generate statistics
     stats_data = _generate_statistics(incidents, total_lines, top_n=top)
