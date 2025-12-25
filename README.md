@@ -40,6 +40,7 @@
 ### 进阶功能 ✅
 
 - ✅ **实时监控**: 通过`monitor`命令实时跟随日志文件（类似`tail -f`）
+- ✅ **守护进程**: 通过`install-service`安装为systemd服务，后台持续运行
 - ✅ **统计分析**: 提供按类型、严重级别、频率的统计和分类功能
 - ✅ **多行聚合**: 自动聚合Oops/Panic/Deadlock的多行堆栈信息
 - ✅ **冷却机制**: 防止短时间内重复告警（可配置冷却时间）
@@ -264,6 +265,98 @@ Unique incident types: 4
 
 ---
 
+### 4. 守护进程模式（Daemon Mode）
+
+将 detecttool 安装为 systemd 服务，实现后台持续运行。
+
+#### 安装服务
+
+```bash
+# 安装守护进程服务（需要root权限）
+sudo detecttool install-service -f /var/log/kern.log
+
+# 自定义配置
+sudo detecttool install-service \
+    -f /var/log/syslog \
+    -c /etc/detecttool/rules.yaml \
+    -o /var/log/detecttool \
+    --name detecttool-syslog
+```
+
+**参数说明**:
+- `-f, --log-file`: 要监控的日志文件（默认: `/var/log/kern.log`）
+- `-c, --config`: 规则配置文件路径（默认: `/etc/detecttool/rules.yaml`）
+- `-o, --output-dir`: 输出日志目录（默认: `/var/log/detecttool`）
+- `--name`: 服务名称（默认: `detecttool`）
+
+#### 管理服务
+
+```bash
+# 启动服务
+sudo systemctl start detecttool
+
+# 停止服务
+sudo systemctl stop detecttool
+
+# 重启服务
+sudo systemctl restart detecttool
+
+# 查看状态
+sudo systemctl status detecttool
+# 或使用
+detecttool service-status
+
+# 设置开机自启动
+sudo systemctl enable detecttool
+
+# 禁用开机自启动
+sudo systemctl disable detecttool
+
+# 一键启动并设置开机自启
+sudo systemctl enable --now detecttool
+```
+
+#### 查看日志
+
+```bash
+# 查看检测到的异常事件
+tail -f /var/log/detecttool/incidents.log
+
+# 查看错误日志
+tail -f /var/log/detecttool/error.log
+
+# 使用 journalctl 查看
+journalctl -u detecttool -f
+```
+
+#### 卸载服务
+
+```bash
+# 卸载服务
+sudo detecttool uninstall-service
+
+# 卸载并删除日志文件
+sudo detecttool uninstall-service --remove-logs
+```
+
+#### 多实例监控
+
+可以安装多个服务实例监控不同的日志文件：
+
+```bash
+# 监控内核日志
+sudo detecttool install-service -f /var/log/kern.log --name detecttool-kern
+
+# 监控系统日志
+sudo detecttool install-service -f /var/log/syslog --name detecttool-syslog
+
+# 分别管理
+sudo systemctl start detecttool-kern
+sudo systemctl start detecttool-syslog
+```
+
+---
+
 ## ⚙️ 规则配置
 
 ### 配置文件格式
@@ -414,7 +507,7 @@ SuSG2025-DetectTool/
 │       └── sample.log         # 示例日志文件
 ├── src/detecttool/            # 源代码
 │   ├── __init__.py
-│   ├── cli.py                 # CLI命令入口（scan/monitor/stats）
+│   ├── cli.py                 # CLI命令入口（scan/monitor/stats/install-service等）
 │   ├── config.py              # 配置加载模块
 │   ├── engine.py              # 核心检测引擎
 │   └── sources/               # 日志源模块
@@ -518,11 +611,12 @@ def _iter_file_lines(path):
 |------|---------|-----------|------|
 | 异常类型检测 | 至少5种 | ✅ **6种** | 超额完成 |
 | 实时监控 | ✅ | ✅ | monitor命令 |
+| 守护进程 | ✅ | ✅ | **systemd服务**，开机自启 |
 | 统计分类 | ✅ | ✅ | stats命令，多维度统计 |
 | 关键词匹配 | ✅ | ✅ | keywords_any/all |
 | 正则匹配 | ✅ | ✅ | regex_any/all + 字段提取 |
 | 配置文件 | YAML/JSON | ✅ **YAML** | 更易读 |
-| CLI工具 | ✅ | ✅ | 3个子命令 |
+| CLI工具 | ✅ | ✅ | **6个**子命令 |
 | 测试用例 | ✅ | ✅ **47个** | 全面覆盖 |
 | 使用文档 | ✅ | ✅ | 本README |
 | 多行聚合 | ❌ | ✅ | **技术亮点** |

@@ -1,6 +1,11 @@
 from __future__ import annotations
 import json
+import os
+import shutil
+import subprocess
+import sys
 from collections import Counter
+from pathlib import Path
 from typing import Dict, List, Any
 import typer
 from rich.console import Console
@@ -327,4 +332,292 @@ def stats(
         console.print(rule_table)
 
     console.print("\n[bold cyan]═══════════════════════════════════════[/bold cyan]\n")
+
+
+# -------------------------
+# Daemon / Service Management
+# -------------------------
+
+SYSTEMD_SERVICE_TEMPLATE = """\
+[Unit]
+Description=SuSG DetectTool - Linux Abnormal Log Detection Daemon
+Documentation=https://github.com/e-wanerer/SuSG2025-DetectTool
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart={detecttool_path} monitor -f {log_file} -c {config_path} --json
+Restart=on-failure
+RestartSec=5
+User=root
+
+StandardOutput=append:{output_dir}/incidents.log
+StandardError=append:{output_dir}/error.log
+
+[Install]
+WantedBy=multi-user.target
+"""
+
+
+def _find_detecttool_path() -> str:
+    """Find the detecttool executable path."""
+    # Try to find in PATH
+    which_result = shutil.which("detecttool")
+    if which_result:
+        return which_result
+
+    # Fallback: use python -m detecttool.cli
+    return f"{sys.executable} -m detecttool.cli"
+
+
+def _get_absolute_config_path(config: str) -> str:
+    """Convert config path to absolute path."""
+    config_path = Path(config)
+    if config_path.is_absolute():
+        return str(config_path)
+
+    # If relative, make it absolute from current working directory
+    return str(Path.cwd() / config_path)
+
+
+def _run_systemctl(args: List[str], check: bool = True) -> subprocess.CompletedProcess:
+    """Run systemctl command."""
+    cmd = ["systemctl"] + args
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, check=check)
+    except FileNotFoundError:
+        console.print("[bold red]Error:[/bold red] systemctl not found. This command requires systemd.")
+        raise typer.Exit(1)
+
+
+@app.command("install-service")
+def install_service(
+    log_file: str = typer.Option(
+        "/var/log/kern.log",
+        "--log-file", "-f",
+        help="Log file to monitor"
+    ),
+    config: str = typer.Option(
+        "/etc/detecttool/rules.yaml",
+        "--config", "-c",
+        help="Path to rules YAML (will be used by the service)"
+    ),
+    output_dir: str = typer.Option(
+        "/var/log/detecttool",
+        "--output-dir", "-o",
+        help="Directory for output logs"
+    ),
+    service_name: str = typer.Option(
+        "detecttool",
+        "--name",
+        help="Service name"
+    ),
+):
+    """
+    Install systemd service for daemon mode.
+
+    Generates and installs a systemd unit file to run detecttool as a
+    background service that monitors log files for system abnormalities.
+
+    Example:
+        sudo detecttool install-service -f /var/log/kern.log
+    """
+    # Check if running as root
+    if os.geteuid() != 0:
+        console.print("[bold red]Error:[/bold red] This command requires root privileges.")
+        console.print("Please run with: [bold]sudo detecttool install-service ...[/bold]")
+        raise typer.Exit(1)
+
+    # Check if log file exists
+    if not Path(log_file).exists():
+        console.print(f"[bold yellow]Warning:[/bold yellow] Log file '{log_file}' does not exist.")
+        console.print("The service will wait for the file to be created.")
+
+    # Find detecttool path
+    detecttool_path = _find_detecttool_path()
+    console.print(f"[dim]DetectTool path: {detecttool_path}[/dim]")
+
+    # Get absolute config path
+    config_path = _get_absolute_config_path(config)
+
+    # Create output directory
+    output_path = Path(output_dir)
+    if not output_path.exists():
+        output_path.mkdir(parents=True, mode=0o755)
+        console.print(f"[green]Created[/green] output directory: {output_dir}")
+
+    # Generate service file content
+    service_content = SYSTEMD_SERVICE_TEMPLATE.format(
+        detecttool_path=detecttool_path,
+        log_file=log_file,
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+
+    # Write service file
+    service_file = Path(f"/etc/systemd/system/{service_name}.service")
+    service_file.write_text(service_content)
+    console.print(f"[green]Created[/green] service file: {service_file}")
+
+    # Reload systemd
+    result = _run_systemctl(["daemon-reload"])
+    if result.returncode == 0:
+        console.print("[green]Reloaded[/green] systemd daemon")
+
+    # Print usage instructions
+    console.print("\n[bold cyan]═══════════════════════════════════════[/bold cyan]")
+    console.print("[bold cyan]   Service Installation Complete!     [/bold cyan]")
+    console.print("[bold cyan]═══════════════════════════════════════[/bold cyan]\n")
+
+    console.print("[bold]Service Configuration:[/bold]")
+    console.print(f"  Service name:  {service_name}")
+    console.print(f"  Log file:      {log_file}")
+    console.print(f"  Config:        {config_path}")
+    console.print(f"  Output dir:    {output_dir}")
+
+    console.print("\n[bold]Management Commands:[/bold]")
+    console.print(f"  Start:         [cyan]sudo systemctl start {service_name}[/cyan]")
+    console.print(f"  Stop:          [cyan]sudo systemctl stop {service_name}[/cyan]")
+    console.print(f"  Restart:       [cyan]sudo systemctl restart {service_name}[/cyan]")
+    console.print(f"  Status:        [cyan]sudo systemctl status {service_name}[/cyan]")
+    console.print(f"  Enable boot:   [cyan]sudo systemctl enable {service_name}[/cyan]")
+    console.print(f"  Disable boot:  [cyan]sudo systemctl disable {service_name}[/cyan]")
+
+    console.print("\n[bold]View Logs:[/bold]")
+    console.print(f"  Incidents:     [cyan]tail -f {output_dir}/incidents.log[/cyan]")
+    console.print(f"  Errors:        [cyan]tail -f {output_dir}/error.log[/cyan]")
+    console.print(f"  Journal:       [cyan]journalctl -u {service_name} -f[/cyan]")
+
+    console.print("\n[bold]Quick Start:[/bold]")
+    console.print(f"  [cyan]sudo systemctl enable --now {service_name}[/cyan]")
+
+
+@app.command("uninstall-service")
+def uninstall_service(
+    service_name: str = typer.Option(
+        "detecttool",
+        "--name",
+        help="Service name to uninstall"
+    ),
+    remove_logs: bool = typer.Option(
+        False,
+        "--remove-logs",
+        help="Also remove log files in /var/log/detecttool"
+    ),
+):
+    """
+    Stop and remove the systemd service.
+
+    Example:
+        sudo detecttool uninstall-service
+        sudo detecttool uninstall-service --remove-logs
+    """
+    # Check if running as root
+    if os.geteuid() != 0:
+        console.print("[bold red]Error:[/bold red] This command requires root privileges.")
+        console.print("Please run with: [bold]sudo detecttool uninstall-service[/bold]")
+        raise typer.Exit(1)
+
+    service_file = Path(f"/etc/systemd/system/{service_name}.service")
+
+    if not service_file.exists():
+        console.print(f"[bold yellow]Warning:[/bold yellow] Service file not found: {service_file}")
+        console.print("Service may not be installed.")
+        raise typer.Exit(0)
+
+    # Stop service if running
+    console.print(f"[dim]Stopping {service_name} service...[/dim]")
+    _run_systemctl(["stop", service_name], check=False)
+
+    # Disable service
+    console.print(f"[dim]Disabling {service_name} service...[/dim]")
+    _run_systemctl(["disable", service_name], check=False)
+
+    # Remove service file
+    service_file.unlink()
+    console.print(f"[green]Removed[/green] service file: {service_file}")
+
+    # Reload systemd
+    _run_systemctl(["daemon-reload"])
+    console.print("[green]Reloaded[/green] systemd daemon")
+
+    # Remove logs if requested
+    if remove_logs:
+        log_dir = Path("/var/log/detecttool")
+        if log_dir.exists():
+            shutil.rmtree(log_dir)
+            console.print(f"[green]Removed[/green] log directory: {log_dir}")
+
+    console.print(f"\n[bold green]Service '{service_name}' has been uninstalled.[/bold green]")
+
+
+@app.command("service-status")
+def service_status(
+    service_name: str = typer.Option(
+        "detecttool",
+        "--name",
+        help="Service name to check"
+    ),
+):
+    """
+    Show daemon service status.
+
+    Example:
+        detecttool service-status
+    """
+    service_file = Path(f"/etc/systemd/system/{service_name}.service")
+
+    if not service_file.exists():
+        console.print(f"[bold yellow]Service not installed[/bold yellow]")
+        console.print(f"Service file not found: {service_file}")
+        console.print(f"\nTo install: [cyan]sudo detecttool install-service -f /var/log/kern.log[/cyan]")
+        raise typer.Exit(0)
+
+    # Get service status
+    result = _run_systemctl(["is-active", service_name], check=False)
+    is_active = result.stdout.strip() == "active"
+
+    result = _run_systemctl(["is-enabled", service_name], check=False)
+    is_enabled = result.stdout.strip() == "enabled"
+
+    # Display status
+    console.print(f"\n[bold]Service:[/bold] {service_name}")
+
+    if is_active:
+        console.print(f"[bold]Status:[/bold]  [bold green]running[/bold green]")
+    else:
+        console.print(f"[bold]Status:[/bold]  [bold red]stopped[/bold red]")
+
+    if is_enabled:
+        console.print(f"[bold]Boot:[/bold]    [green]enabled[/green]")
+    else:
+        console.print(f"[bold]Boot:[/bold]    [yellow]disabled[/yellow]")
+
+    # Show log file stats if available
+    incidents_log = Path("/var/log/detecttool/incidents.log")
+    if incidents_log.exists():
+        stat = incidents_log.stat()
+        size_kb = stat.st_size / 1024
+        console.print(f"\n[bold]Incidents Log:[/bold] {incidents_log}")
+        console.print(f"  Size: {size_kb:.1f} KB")
+
+        # Count incidents (lines in JSON log)
+        try:
+            with open(incidents_log, "r") as f:
+                line_count = sum(1 for _ in f)
+            console.print(f"  Incidents: {line_count}")
+        except Exception:
+            pass
+
+    # Show detailed status from systemctl
+    console.print(f"\n[dim]─── systemctl status {service_name} ───[/dim]")
+    result = subprocess.run(
+        ["systemctl", "status", service_name, "--no-pager", "-l"],
+        capture_output=True,
+        text=True,
+    )
+    # Print status output (trim to reasonable length)
+    lines = result.stdout.split("\n")[:15]
+    for line in lines:
+        console.print(f"[dim]{line}[/dim]")
 
