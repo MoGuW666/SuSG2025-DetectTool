@@ -1,0 +1,16 @@
+Dec 24 17:40:01 kernel: Booting Linux on physical CPU 0x0
+Dec 24 17:40:10 kernel: Out of memory: Killed process 1234 (python3) total-vm:123456kB, anon-rss:7890kB
+Dec 24 17:40:11 kernel: Oops: 0002 [#1] SMP PTI
+Dec 24 17:40:12 kernel: Call Trace:
+Dec 24 17:40:13 kernel: Kernel panic - not syncing: Fatal exception
+Dec 24 17:40:14 kernel: panic stack trace line 1
+Dec 24 17:40:15 kernel: panic stack trace line 2
+Dec 24 17:40:20 kernel: EXT4-fs error (device sda1): ext4_find_entry:1455: inode #2: comm bash: reading directory lblock 0
+Dec 24 17:40:30 kernel: reboot: Restarting system
+Dec 24 18:05:00 kernel: INFO: task kworker/0:1:4321 blocked for more than 120 seconds.
+Dec 24 18:05:00 kernel:       Tainted: G        W         6.8.0 #1
+Dec 24 18:05:00 kernel: "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+Dec 24 18:05:00 kernel: task:kworker/0:1 state:D stack:0 pid:4321 ppid:2 flags:0x00000008
+Dec 24 18:05:00 kernel: Call Trace:
+Dec 24 18:05:00 kernel:  schedule+0x2f/0x90
+Dec 24 18:05:00 kernel: ---[ end trace 1234567890abcdef ]---
