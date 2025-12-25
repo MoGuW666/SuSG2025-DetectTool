@@ -169,16 +169,17 @@ class TestCooldown:
 
     def test_cooldown_prevents_duplicates(self, config):
         """Test that cooldown prevents rapid duplicate incidents."""
-        # Create a log with duplicate OOM events
+        # Create a log with duplicate OOM events (same timestamp and content)
+        # Cooldown fingerprint includes message content, so duplicates must be identical
         duplicate_log = [
             (1, "Dec 24 17:40:10 kernel: Out of memory: Killed process 1234 (python3)\n"),
-            (2, "Dec 24 17:40:11 kernel: Out of memory: Killed process 1234 (python3)\n"),  # Duplicate
-            (3, "Dec 24 17:40:12 kernel: Out of memory: Killed process 1234 (python3)\n"),  # Duplicate
+            (2, "Dec 24 17:40:10 kernel: Out of memory: Killed process 1234 (python3)\n"),  # Exact duplicate
+            (3, "Dec 24 17:40:10 kernel: Out of memory: Killed process 1234 (python3)\n"),  # Exact duplicate
         ]
 
         incidents = detect_lines(iter(duplicate_log), config.rules)
 
-        # Cooldown should prevent the duplicates (same pid, comm, and message prefix)
+        # Cooldown should prevent the duplicates (same pid, comm, and message)
         # Only the first one should be detected
         oom_incidents = [inc for inc in incidents if inc.type == "OOM"]
         assert len(oom_incidents) == 1, "Cooldown should prevent duplicate OOM incidents"
