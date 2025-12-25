@@ -434,12 +434,17 @@ def install_service(
         console.print(f"[bold yellow]Warning:[/bold yellow] Log file '{log_file}' does not exist.")
         console.print("The service will wait for the file to be created.")
 
+    # Get absolute config path and check if it exists
+    config_path = _get_absolute_config_path(config)
+    if not Path(config_path).exists():
+        console.print(f"[bold red]Error:[/bold red] Config file not found: {config_path}")
+        console.print("\n[bold]Please specify a valid config file path:[/bold]")
+        console.print(f"  sudo detecttool install-service -f {log_file} [cyan]-c ./configs/rules.yaml[/cyan]")
+        raise typer.Exit(1)
+
     # Find detecttool path
     detecttool_path = _find_detecttool_path()
     console.print(f"[dim]DetectTool path: {detecttool_path}[/dim]")
-
-    # Get absolute config path
-    config_path = _get_absolute_config_path(config)
 
     # Create output directory
     output_path = Path(output_dir)
