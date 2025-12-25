@@ -3,11 +3,15 @@
 > 2025年全国大学生计算机系统能力大赛 - 操作系统设计赛 - 西北区域赛
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-GPL-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-47%20passed-brightgreen.svg)](tests/)
-
+Ic
 一个用于Linux系统日志异常检测的命令行工具，支持实时监控和统计分析，帮助运维人员快速发现和定位系统异常事件。
-
+## 📝 许可证
+本项目遵循以下开源协议：
+**代码**: [GNU General Public License v3.0 (GPL-3.0)](LICENSE)
+**文档**: [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](
+     https://creativecommons.org/licenses/by-sa/4.0/)
 ---
 
 ## 项目信息
