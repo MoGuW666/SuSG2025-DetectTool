@@ -477,10 +477,10 @@ detecttool monitor -f /var/log/kern.log --poll 1.0
 ## 许可证
 
 本项目遵循以下开源协议：
-**代码**: [GNU General Public License v3.0 (GPL-3.0)](LICENSE)
-**文档**: [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](
+- **代码**: [GNU General Public License v3.0 (GPL-3.0)](LICENSE)
+- **文档**: [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](
      https://creativecommons.org/licenses/by-sa/4.0/)
-     
+
 ---
 
 
