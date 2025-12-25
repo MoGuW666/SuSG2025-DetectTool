@@ -1,9 +1,11 @@
 from __future__ import annotations
 import json
+from collections import Counter
+from typing import Dict, List, Any
 import typer
 from rich.console import Console
 from rich.table import Table
-from .engine import detect_lines, Detector, MultiLineAggregator
+from .engine import detect_lines, Detector, MultiLineAggregator, Incident
 from .sources.file_follow import follow_file
 
 from .config import load_config
@@ -115,8 +117,178 @@ def monitor(
         console.print("[yellow]Stopped.[/yellow]")
 
 
+def _generate_statistics(incidents: List[Incident], total_lines: int, top_n: int = 10) -> Dict[str, Any]:
+    """
+    Generate statistics from detected incidents.
+
+    Args:
+        incidents: List of detected incidents
+        total_lines: Total number of lines scanned
+        top_n: Number of top items to include in rankings
+
+    Returns:
+        Dictionary containing all statistics
+    """
+    total = len(incidents)
+
+    # Count by type
+    type_counts = Counter(inc.type for inc in incidents)
+
+    # Count by severity
+    severity_counts = Counter(inc.severity for inc in incidents)
+
+    # Count by rule ID
+    rule_counts = Counter(inc.rule_id for inc in incidents)
+
+    # Extract and count process names (comm)
+    comm_list = [inc.extracted.get('comm') for inc in incidents if inc.extracted.get('comm')]
+    comm_counts = Counter(comm_list)
+
+    # Extract and count PIDs
+    pid_list = [inc.extracted.get('pid') for inc in incidents if inc.extracted.get('pid')]
+    pid_counts = Counter(pid_list)
+
+    return {
+        'total_lines_scanned': total_lines,
+        'total_incidents': total,
+        'unique_types': len(type_counts),
+        'by_type': dict(type_counts),
+        'by_severity': dict(severity_counts),
+        'by_rule': dict(rule_counts),
+        'top_processes': comm_counts.most_common(top_n),
+        'top_pids': pid_counts.most_common(top_n),
+    }
+
+
 @app.command()
-def stats():
-    """Statistics (placeholder)."""
-    console.print("[yellow]stats: TODO (will be implemented later)[/yellow]")
+def stats(
+    file: str = typer.Option(..., "--file", "-f", help="Path to a log file to analyze"),
+    config: str = typer.Option("configs/rules.yaml", "--config", "-c", help="Path to rules YAML"),
+    json_out: bool = typer.Option(False, "--json", help="Output JSON instead of tables"),
+    top: int = typer.Option(10, "--top", "-n", help="Show top N items in rankings"),
+):
+    """
+    Analyze log file and show statistics of detected incidents.
+
+    Provides statistics by type, severity, and top affected processes/PIDs.
+    """
+    cfg = load_config(config)
+
+    # Scan the log file
+    lines_iter = _iter_file_lines(file)
+    incidents = detect_lines(lines_iter, cfg.rules)
+
+    # Count total lines (get the last line number from incidents or re-scan)
+    # Re-scan to count lines (quick operation)
+    total_lines = 0
+    for line_no, _ in _iter_file_lines(file):
+        total_lines = line_no
+
+    # Generate statistics
+    stats_data = _generate_statistics(incidents, total_lines, top_n=top)
+
+    # JSON output
+    if json_out:
+        print(json.dumps(stats_data, ensure_ascii=False, indent=2))
+        raise typer.Exit(0)
+
+    # Rich table output
+    total = stats_data['total_incidents']
+
+    console.print("\n[bold cyan]═══════════════════════════════════════[/bold cyan]")
+    console.print("[bold cyan]    Log Analysis Statistics Report    [/bold cyan]")
+    console.print("[bold cyan]═══════════════════════════════════════[/bold cyan]\n")
+
+    # Overview
+    console.print(f"[bold]Total lines scanned:[/bold] {stats_data['total_lines_scanned']:,}")
+    console.print(f"[bold]Total incidents detected:[/bold] {total:,}")
+    console.print(f"[bold]Unique incident types:[/bold] {stats_data['unique_types']}\n")
+
+    if total == 0:
+        console.print("[yellow]No incidents detected in the log file.[/yellow]")
+        return
+
+    # Table 1: Incidents by Type
+    type_table = Table(title="Incidents by Type", show_header=True, header_style="bold magenta")
+    type_table.add_column("Type", style="cyan", width=20)
+    type_table.add_column("Count", justify="right", style="green")
+    type_table.add_column("Percentage", justify="right", style="yellow")
+
+    for type_name, count in sorted(stats_data['by_type'].items(), key=lambda x: x[1], reverse=True):
+        percentage = (count / total) * 100
+        type_table.add_row(type_name, str(count), f"{percentage:.1f}%")
+
+    console.print(type_table)
+    console.print()
+
+    # Table 2: Incidents by Severity
+    severity_table = Table(title="Incidents by Severity", show_header=True, header_style="bold magenta")
+    severity_table.add_column("Severity", style="cyan", width=20)
+    severity_table.add_column("Count", justify="right", style="green")
+    severity_table.add_column("Percentage", justify="right", style="yellow")
+
+    # Sort by severity level (critical > high > medium > low)
+    severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
+    for severity, count in sorted(stats_data['by_severity'].items(),
+                                  key=lambda x: severity_order.get(x[0], 99)):
+        percentage = (count / total) * 100
+        severity_table.add_row(severity, str(count), f"{percentage:.1f}%")
+
+    console.print(severity_table)
+    console.print()
+
+    # Table 3: Top N Processes (if any)
+    if stats_data['top_processes']:
+        proc_table = Table(title=f"Top {min(top, len(stats_data['top_processes']))} Affected Processes",
+                          show_header=True, header_style="bold magenta")
+        proc_table.add_column("Rank", style="dim", width=6, justify="right")
+        proc_table.add_column("Process Name", style="cyan")
+        proc_table.add_column("Incidents", justify="right", style="green")
+
+        for rank, (proc_name, count) in enumerate(stats_data['top_processes'], start=1):
+            proc_table.add_row(str(rank), proc_name, str(count))
+
+        console.print(proc_table)
+        console.print()
+
+    # Table 4: Top N PIDs (if any)
+    if stats_data['top_pids']:
+        pid_table = Table(title=f"Top {min(top, len(stats_data['top_pids']))} Affected PIDs",
+                         show_header=True, header_style="bold magenta")
+        pid_table.add_column("Rank", style="dim", width=6, justify="right")
+        pid_table.add_column("PID", style="cyan")
+        pid_table.add_column("Incidents", justify="right", style="green")
+
+        for rank, (pid, count) in enumerate(stats_data['top_pids'], start=1):
+            pid_table.add_row(str(rank), pid, str(count))
+
+        console.print(pid_table)
+        console.print()
+
+    # Table 5: Incidents by Rule (only if reasonable number of rules)
+    if len(stats_data['by_rule']) <= top:
+        rule_table = Table(title="Incidents by Detection Rule",
+                          show_header=True, header_style="bold magenta")
+        rule_table.add_column("Rule ID", style="cyan")
+        rule_table.add_column("Count", justify="right", style="green")
+
+        for rule_id, count in sorted(stats_data['by_rule'].items(), key=lambda x: x[1], reverse=True):
+            rule_table.add_row(rule_id, str(count))
+
+        console.print(rule_table)
+    else:
+        # Show only top N rules if there are too many
+        rule_table = Table(title=f"Top {top} Detection Rules",
+                          show_header=True, header_style="bold magenta")
+        rule_table.add_column("Rank", style="dim", width=6, justify="right")
+        rule_table.add_column("Rule ID", style="cyan")
+        rule_table.add_column("Count", justify="right", style="green")
+
+        top_rules = sorted(stats_data['by_rule'].items(), key=lambda x: x[1], reverse=True)[:top]
+        for rank, (rule_id, count) in enumerate(top_rules, start=1):
+            rule_table.add_row(str(rank), rule_id, str(count))
+
+        console.print(rule_table)
+
+    console.print("\n[bold cyan]═══════════════════════════════════════[/bold cyan]\n")
 
