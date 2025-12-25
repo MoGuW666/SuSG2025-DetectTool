@@ -55,7 +55,7 @@ def scan(
         raise typer.Exit(1)
 
     if json_out:
-        print(json.dumps([x.to_dict() for x in incidents], ensure_ascii=False, indent=2))
+        print(json.dumps([x.to_dict() for x in incidents], ensure_ascii=False, indent=2), flush=True)
         raise typer.Exit(0)
 
     table = Table(title=f"Incidents ({len(incidents)})")
@@ -112,7 +112,7 @@ def monitor(
             hits = agg.process(line_no, line)
             for inc in hits:
                 if json_out:
-                    print(json.dumps(inc.to_dict(), ensure_ascii=False))
+                    print(json.dumps(inc.to_dict(), ensure_ascii=False), flush=True)
                 else:
                     console.print(
                         f"[bold]{inc.type}[/bold] "
@@ -131,7 +131,7 @@ def monitor(
         # 退出前 flush 一下，避免最后一个块丢失
         for inc in agg.flush():
             if json_out:
-                print(json.dumps(inc.to_dict(), ensure_ascii=False))
+                print(json.dumps(inc.to_dict(), ensure_ascii=False), flush=True)
             else:
                 console.print(
                     f"[bold]{inc.type}[/bold] "
@@ -230,7 +230,7 @@ def stats(
 
     # JSON output
     if json_out:
-        print(json.dumps(stats_data, ensure_ascii=False, indent=2))
+        print(json.dumps(stats_data, ensure_ascii=False, indent=2), flush=True)
         raise typer.Exit(0)
 
     # Rich table output
@@ -346,6 +346,7 @@ After=syslog.target network.target
 
 [Service]
 Type=simple
+Environment=PYTHONUNBUFFERED=1
 ExecStart={detecttool_path} monitor -f {log_file} -c {config_path} --json
 Restart=on-failure
 RestartSec=5
