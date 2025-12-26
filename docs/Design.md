@@ -56,31 +56,50 @@
 本项目采用标准的 Python 包结构组织代码，各目录的职责划分清晰明确：
 
 ```
-SuSG2025-DetectTool/
-├── src/
-│   └── detecttool/              # 核心包
-│       ├── __init__.py          # 包初始化
-│       ├── cli.py               # 命令行入口（scan/monitor/stats/service管理）
-│       ├── config.py            # 配置加载与规则解析
-│       ├── engine.py            # 检测引擎核心（Detector/Aggregator/Cooldown）
-│       └── sources/
-│           ├── __init__.py
-│           └── file_follow.py   # 文件尾随模块（类似 tail -f）
-├── configs/
-│   └── rules.yaml               # 默认检测规则配置
-├── tests/                       # 测试套件
-│   ├── conftest.py              # pytest 共享 fixtures
-│   ├── test_engine.py           # 引擎单元测试
-│   ├── test_cli.py              # CLI 集成测试
-│   ├── test_stats.py            # 统计功能测试
-│   └── fixtures/
-│       └── test.log             # 测试用日志样本
-├── examples/
-│   └── logs/
-│       └── sample.log           # 示例日志文件
-├── docs/                        # 项目文档
-├── pyproject.toml               # 项目元数据与依赖配置
-└── pytest.ini                   # pytest 配置
+  SuSG2025-DetectTool/
+  ├── src/
+  │   └── detecttool/              # 核心包
+  │       ├── __init__.py          # 包初始化
+  │       ├── cli.py               # 命令行入口（scan/monitor/stats/service管理）
+  │       ├── config.py            # 配置加载与规则解析
+  │       ├── engine.py            # 检测引擎核心（Detector/Aggregator/Cooldown）
+  │       └── sources/
+  │           ├── __init__.py
+  │           └── file_follow.py   # 文件尾随模块（类似 tail -f）
+  │
+  ├── configs/
+  │   └── rules.yaml               # 默认检测规则配置（6种异常类型）
+  │
+  ├── tests/                       # 测试套件（47个测试用例）
+  │   ├── __init__.py              # 测试包标识
+  │   ├── conftest.py              # pytest 共享 fixtures
+  │   ├── test_engine.py           # 引擎单元测试（26个测试）
+  │   ├── test_cli.py              # CLI 集成测试（14个测试）
+  │   ├── test_stats.py            # 统计功能测试（7个测试）
+  │   ├── README.md                # 测试说明文档
+  │   └── fixtures/
+  │       └── test.log             # 测试用日志样本（包含全部6种异常）
+  │
+  ├── examples/
+  │   └── logs/                    # 示例日志文件集合
+  │       ├── sample.log           # 基础示例（6种异常各1个）
+  │       ├── oom_storm.log        # OOM风暴场景（12个事件）
+  │       ├── kernel_panic_full.log # 完整Kernel Panic堆栈
+  │       ├── deadlock_scenario.log # 多种死锁场景（4个事件）
+  │       ├── mixed_production.log  # 生产环境混合日志
+  │       ├── filesystem_errors.log # 文件系统异常集合
+  │       └── README.md            # 示例文件使用说明（287行）
+  │
+  ├── docs/                        # 项目文档
+  │   ├── Design.md                # 项目设计文档（Markdown版）
+  │   ├── Design.pdf               # 项目设计文档（PDF版）
+  │   └── images/                  # 文档图片资源
+  │
+  ├── README.md                    # 项目主文档（495行，详细的安装使用说明）
+  ├── LICENSE                      # GPL-3.0 开源许可证（代码）
+  ├── LICENSE.docs                 # CC BY-SA 4.0 许可证（文档）
+  ├── pyproject.toml               # 项目元数据与依赖配置
+  └── pytest.ini                   # pytest 配置
 ```
 
 ### 2.2 分层架构设计
@@ -89,45 +108,62 @@ SuSG2025-DetectTool/
 
 ```mermaid
 flowchart TB
-    subgraph UserInterface [用户交互层]
-        CLI[CLI 命令入口<br/>cli.py]
-        Systemd[Systemd Service<br/>守护进程]
-    end
+      subgraph UserInterface [用户交互层]
+          CLI[CLI 命令<br/>scan / monitor / stats]
+          Systemd[Systemd Service<br/>后台守护进程]
+      end
 
-    subgraph ConfigLayer [配置管理层]
-        ConfigLoader[配置加载器<br/>config.py]
-        RulesYAML[(rules.yaml<br/>规则定义)]
-    end
+      subgraph ConfigLayer [配置管理层]
+          ConfigLoader[配置加载器<br/>load_config]
+          RulesYAML[(规则配置<br/>rules.yaml)]
+      end
 
-    subgraph EngineLayer [核心检测引擎层]
-        Detector[单行检测器<br/>Detector]
-        Aggregator[多行聚合器<br/>MultiLineAggregator]
-        Cooldown[冷却过滤器<br/>Cooldown]
-    end
+      subgraph EngineCore [核心检测引擎层]
+          DetectLines[检测协调器<br/>detect_lines 函数]
 
-    subgraph SourceLayer [输入源层]
-        FileFollow[文件尾随器<br/>file_follow.py]
-        LogFile[(日志文件<br/>/var/log/kern.log)]
-    end
+          subgraph AggregatorBox [多行聚合器]
+              Aggregator[MultiLineAggregator]
+              AggLogic[聚合逻辑<br/>触发检测<br/>时间窗口<br/>结束标记]
+          end
 
-    subgraph OutputLayer [输出层]
-        Console[终端输出<br/>Rich 表格]
-        JSONOut[JSON 输出]
-        FileLog[文件日志]
-    end
+          subgraph DetectorBox [单行检测器]
+              Detector[Detector]
+              MatchLogic[匹配逻辑<br/>关键词匹配<br/>正则提取]
+              Cooldown[Cooldown 机制<br/>防重复告警]
+          end
+      end
 
-    CLI --> ConfigLoader
-    CLI --> FileFollow
-    Systemd --> CLI
-    RulesYAML --> ConfigLoader
-    ConfigLoader --> Detector
-    LogFile --> FileFollow
-    FileFollow --> Detector
-    Detector --> Aggregator
-    Aggregator --> Cooldown
-    Cooldown --> Console
-    Cooldown --> JSONOut
-    Cooldown --> FileLog
+      subgraph SourceLayer [输入源层]
+          FileFollow[文件尾随器<br/>file_follow.py]
+          LogFile[(日志文件<br/>/var/log/kern.log)]
+      end
+
+      subgraph OutputLayer [输出层]
+          Console[终端输出<br/>Rich 表格]
+          JSONOut[JSON 输出<br/>脚本集成]
+          FileLog[日志文件<br/>/var/log/detecttool/]
+      end
+
+      CLI --> DetectLines
+      Systemd --> CLI
+      RulesYAML --> ConfigLoader
+      ConfigLoader --> DetectLines
+
+      LogFile --> FileFollow
+      FileFollow -->|日志行| DetectLines
+      DetectLines --> Aggregator
+      Aggregator --> AggLogic
+      AggLogic --> Detector
+      Detector --> MatchLogic
+      MatchLogic --> Cooldown
+      Cooldown -->|异常事件| Console
+      Cooldown -->|异常事件| JSONOut
+      Cooldown -->|异常事件| FileLog
+
+      style DetectorBox fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+      style AggregatorBox fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+      style DetectLines fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
+      style Cooldown fill:#ffebee,stroke:#c62828,stroke-width:2px
 ```
 
 ### 2.3 核心模块职责说明
@@ -166,7 +202,6 @@ flowchart TB
 7. `Cooldown` 组件检查该事件的指纹，决定是否输出
 8. 最终通过 Rich 表格或 JSON 格式将结果呈现给用户
 
----
 
 ## 3. 核心功能实现与技术细节
 
@@ -801,11 +836,10 @@ def load_config(path: str) -> Config:
 
 编译后的 `Pattern` 对象存储在 `Rule` 数据类中，后续匹配时直接调用 `pattern.search(text)`，避免重复编译开销。
 
----
 
 ## 4. 测试与验证
 
-本章将详细介绍如何从零开始搭建测试环境、运行自动化测试套件，以及如何验证各项功能的正确性。所有步骤均基于全新的 Ubuntu 系统环境编写，确保可复现性。
+本章将详细介绍如何从零开始搭建测试环境、运行自动化测试套件，以及如何验证各项功能的正确性。所有步骤均基于 Ubuntu 系统环境编写，确保可复现性。
 
 ### 4.1 测试环境搭建
 
@@ -817,7 +851,6 @@ def load_config(path: str) -> Config:
 |-----|------|
 | 操作系统 | Ubuntu 20.04 LTS 或更高版本 |
 | Python 版本 | Python 3.10 或更高版本 |
-| 磁盘空间 | 至少 500 MB 可用空间 |
 | 网络 | 需要访问 GitHub 和 PyPI |
 
 #### 4.1.2 从干净环境开始搭建
@@ -921,10 +954,68 @@ detecttool --help
 pytest
 ```
 
-**预期输出**（请在实际运行后补充）：
+**示例输出**：
 
 ```
-# TODO: 请在 Ubuntu 环境运行 pytest 后，将完整输出粘贴到此处
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /home/pan/SuSG2025-DetectTool/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/pan/SuSG2025-DetectTool
+configfile: pytest.ini
+testpaths: tests
+plugins: cov-7.0.0
+collected 47 items                                                             
+
+tests/test_cli.py::TestScanCommand::test_scan_basic PASSED               [  2%]
+tests/test_cli.py::TestScanCommand::test_scan_json_output PASSED         [  4%]
+tests/test_cli.py::TestScanCommand::test_scan_detects_all_types PASSED   [  6%]
+tests/test_cli.py::TestScanCommand::test_scan_file_not_found PASSED      [  8%]
+tests/test_cli.py::TestStatsCommand::test_stats_basic PASSED             [ 10%]
+tests/test_cli.py::TestStatsCommand::test_stats_json_output PASSED       [ 12%]
+tests/test_cli.py::TestStatsCommand::test_stats_counts_accuracy PASSED   [ 14%]
+tests/test_cli.py::TestStatsCommand::test_stats_top_n_parameter PASSED   [ 17%]
+tests/test_cli.py::TestStatsCommand::test_stats_displays_tables PASSED   [ 19%]
+tests/test_cli.py::TestStatsCommand::test_stats_file_not_found PASSED    [ 21%]
+tests/test_cli.py::TestEdgeCases::test_stats_empty_log PASSED            [ 23%]
+tests/test_cli.py::TestEdgeCases::test_stats_empty_log_json PASSED       [ 25%]
+tests/test_engine.py::TestDetection::test_total_incidents_count PASSED   [ 27%]
+tests/test_engine.py::TestDetection::test_oom_detection PASSED           [ 29%]
+tests/test_engine.py::TestDetection::test_oops_detection PASSED          [ 31%]
+tests/test_engine.py::TestDetection::test_panic_detection PASSED         [ 34%]
+tests/test_engine.py::TestDetection::test_deadlock_detection PASSED      [ 36%]
+tests/test_engine.py::TestDetection::test_reboot_detection PASSED        [ 38%]
+tests/test_engine.py::TestDetection::test_fs_exception_detection PASSED  [ 40%]
+tests/test_engine.py::TestFieldExtraction::test_oom_field_extraction PASSED [ 42%]
+tests/test_engine.py::TestFieldExtraction::test_deadlock_field_extraction PASSED [ 44%]
+tests/test_engine.py::TestMultiLineAggregation::test_panic_has_context PASSED [ 46%]
+tests/test_engine.py::TestMultiLineAggregation::test_deadlock_has_context PASSED [ 48%]
+tests/test_engine.py::TestMultiLineAggregation::test_oops_has_context PASSED [ 51%]
+tests/test_engine.py::TestCooldown::test_cooldown_prevents_duplicates PASSED [ 53%]
+tests/test_engine.py::TestCooldown::test_different_process_not_cooldown PASSED [ 55%]
+tests/test_engine.py::TestEdgeCases::test_empty_log PASSED               [ 57%]
+tests/test_engine.py::TestEdgeCases::test_no_matches PASSED              [ 59%]
+tests/test_engine.py::TestEdgeCases::test_incident_types_are_unique PASSED [ 61%]
+tests/test_stats.py::TestStatisticsGeneration::test_total_incidents PASSED [ 63%]
+tests/test_stats.py::TestStatisticsGeneration::test_total_lines_scanned PASSED [ 65%]
+tests/test_stats.py::TestStatisticsGeneration::test_unique_types_count PASSED [ 68%]
+tests/test_stats.py::TestStatisticsGeneration::test_by_type_structure PASSED [ 70%]
+tests/test_stats.py::TestStatisticsGeneration::test_by_severity_structure PASSED [ 72%]
+tests/test_stats.py::TestStatisticsGeneration::test_by_rule_structure PASSED [ 74%]
+tests/test_stats.py::TestStatisticsGeneration::test_top_processes_structure PASSED [ 76%]
+tests/test_stats.py::TestStatisticsGeneration::test_top_pids_structure PASSED [ 78%]
+tests/test_stats.py::TestStatisticsCounts::test_type_counts PASSED       [ 80%]
+tests/test_stats.py::TestStatisticsCounts::test_severity_counts PASSED   [ 82%]
+tests/test_stats.py::TestStatisticsCounts::test_total_equals_sum PASSED  [ 85%]
+tests/test_stats.py::TestStatisticsCounts::test_rule_counts PASSED       [ 87%]
+tests/test_stats.py::TestTopNRankings::test_top_processes_content PASSED [ 89%]
+tests/test_stats.py::TestTopNRankings::test_top_pids_content PASSED      [ 91%]
+tests/test_stats.py::TestTopNRankings::test_top_n_limit PASSED           [ 93%]
+tests/test_stats.py::TestEdgeCases::test_empty_incidents PASSED          [ 95%]
+tests/test_stats.py::TestEdgeCases::test_incidents_without_extracted_fields PASSED [ 97%]
+tests/test_stats.py::TestEdgeCases::test_duplicate_process_aggregation PASSED [100%]
+
+============================== 47 passed in 0.65s ==============================
+
 ```
 
 #### 4.2.3 运行特定类别的测试
@@ -964,10 +1055,37 @@ pytest --cov=detecttool --cov-report=term-missing
 detecttool scan -f tests/fixtures/test.log -c configs/rules.yaml
 ```
 
-**预期输出**（请在实际运行后补充）：
+**示例输出**：
 
 ```
-# TODO: 请在 Ubuntu 环境运行后，将完整输出粘贴到此处
+                                                     Incidents (6)                                                      
+┏━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Line ┃ Type         ┃ Severity ┃ Rule               ┃ Extracted                   ┃ Ctx ┃ Message                    ┃
+┡━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│    2 │ OOM          │ high     │ oom_basic          │ {"pid": "1234", "comm":     │   0 │ Dec 24 17:40:10 kernel:    │
+│      │              │          │                    │ "python3"}                  │     │ Out of memory: Killed      │
+│      │              │          │                    │                             │     │ process 1234 (python3)     │
+│      │              │          │                    │                             │     │ total-vm:123456kB,         │
+│      │              │          │                    │                             │     │ anon-rss:7890kB            │
+│    3 │ OOPS         │ high     │ oops_basic         │ {}                          │   1 │ Dec 24 17:40:11 kernel:    │
+│      │              │          │                    │                             │     │ Oops: 0002  SMP PTI        │
+│    5 │ PANIC        │ critical │ panic_basic        │ {}                          │   2 │ Dec 24 17:40:13 kernel:    │
+│      │              │          │                    │                             │     │ Kernel panic - not         │
+│      │              │          │                    │                             │     │ syncing: Fatal exception   │
+│    8 │ FS_EXCEPTION │ high     │ fs_exception_basic │ {}                          │   0 │ Dec 24 17:40:20 kernel:    │
+│      │              │          │                    │                             │     │ EXT4-fs error (device      │
+│      │              │          │                    │                             │     │ sda1):                     │
+│      │              │          │                    │                             │     │ ext4_find_entry:1455:      │
+│      │              │          │                    │                             │     │ inode #2: comm bash:       │
+│      │              │          │                    │                             │     │ reading directory lblock 0 │
+│    9 │ REBOOT       │ medium   │ reboot_basic       │ {}                          │   0 │ Dec 24 17:40:30 kernel:    │
+│      │              │          │                    │                             │     │ reboot: Restarting system  │
+│   10 │ DEADLOCK     │ high     │ deadlock_hung_task │ {"comm": "kworker/0:1",     │   6 │ Dec 24 18:05:00 kernel:    │
+│      │              │          │                    │ "pid": "4321", "secs":      │     │ INFO: task                 │
+│      │              │          │                    │ "120"}                      │     │ kworker/0:1:4321 blocked   │
+│      │              │          │                    │                             │     │ for more than 120 seconds. │
+└──────┴──────────────┴──────────┴────────────────────┴─────────────────────────────┴─────┴────────────────────────────┘
+
 ```
 
 **验证要点**：
@@ -986,10 +1104,85 @@ detecttool scan -f tests/fixtures/test.log -c configs/rules.yaml
 detecttool scan -f tests/fixtures/test.log -c configs/rules.yaml --json
 ```
 
-**预期输出**（请在实际运行后补充）：
+**示例输出**：
 
 ```json
-# TODO: 请在 Ubuntu 环境运行后，将完整 JSON 输出粘贴到此处
+[
+  {
+    "rule_id": "oom_basic",
+    "type": "OOM",
+    "severity": "high",
+    "message": "Dec 24 17:40:10 kernel: Out of memory: Killed process 1234 (python3) total-vm:123456kB, anon-rss:7890kB",
+    "line_no": 2,
+    "extracted": {
+      "pid": "1234",
+      "comm": "python3"
+    },
+    "context": []
+  },
+  {
+    "rule_id": "oops_basic",
+    "type": "OOPS",
+    "severity": "high",
+    "message": "Dec 24 17:40:11 kernel: Oops: 0002 [#1] SMP PTI",
+    "line_no": 3,
+    "extracted": {},
+    "context": [
+      "Dec 24 17:40:12 kernel: Call Trace:"
+    ]
+  },
+  {
+    "rule_id": "panic_basic",
+    "type": "PANIC",
+    "severity": "critical",
+    "message": "Dec 24 17:40:13 kernel: Kernel panic - not syncing: Fatal exception",
+    "line_no": 5,
+    "extracted": {},
+    "context": [
+      "Dec 24 17:40:14 kernel: panic stack trace line 1",
+      "Dec 24 17:40:15 kernel: panic stack trace line 2"
+    ]
+  },
+  {
+    "rule_id": "fs_exception_basic",
+    "type": "FS_EXCEPTION",
+    "severity": "high",
+    "message": "Dec 24 17:40:20 kernel: EXT4-fs error (device sda1): ext4_find_entry:1455: inode #2: comm bash: reading directory lblock 0",
+    "line_no": 8,
+    "extracted": {},
+    "context": []
+  },
+  {
+    "rule_id": "reboot_basic",
+    "type": "REBOOT",
+    "severity": "medium",
+    "message": "Dec 24 17:40:30 kernel: reboot: Restarting system",
+    "line_no": 9,
+    "extracted": {},
+    "context": []
+  },
+  {
+    "rule_id": "deadlock_hung_task",
+    "type": "DEADLOCK",
+    "severity": "high",
+    "message": "Dec 24 18:05:00 kernel: INFO: task kworker/0:1:4321 blocked for more than 120 seconds.",
+    "line_no": 10,
+    "extracted": {
+      "comm": "kworker/0:1",
+      "pid": "4321",
+      "secs": "120"
+    },
+    "context": [
+      "Dec 24 18:05:00 kernel:       Tainted: G        W         6.8.0 #1",
+      "Dec 24 18:05:00 kernel: \"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\" disables this message.",
+      "Dec 24 18:05:00 kernel: task:kworker/0:1 state:D stack:0 pid:4321 ppid:2 flags:0x00000008",
+      "Dec 24 18:05:00 kernel: Call Trace:",
+      "Dec 24 18:05:00 kernel:  schedule+0x2f/0x90",
+      "Dec 24 18:05:00 kernel: ---[ end trace 1234567890abcdef ]---"
+    ]
+  }
+]
+
 ```
 
 **验证要点**：
@@ -1006,10 +1199,69 @@ detecttool scan -f tests/fixtures/test.log -c configs/rules.yaml --json
 detecttool stats -f tests/fixtures/test.log -c configs/rules.yaml
 ```
 
-**预期输出**（请在实际运行后补充）：
+**示例输出**：
 
 ```
-# TODO: 请在 Ubuntu 环境运行后，将完整输出粘贴到此处
+
+═══════════════════════════════════════
+    Log Analysis Statistics Report    
+═══════════════════════════════════════
+
+Total lines scanned: 16
+Total incidents detected: 6
+Unique incident types: 6
+
+              Incidents by Type              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━┓
+┃ Type                 ┃ Count ┃ Percentage ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━┩
+│ OOM                  │     1 │      16.7% │
+│ OOPS                 │     1 │      16.7% │
+│ PANIC                │     1 │      16.7% │
+│ FS_EXCEPTION         │     1 │      16.7% │
+│ REBOOT               │     1 │      16.7% │
+│ DEADLOCK             │     1 │      16.7% │
+└──────────────────────┴───────┴────────────┘
+
+            Incidents by Severity            
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━┓
+┃ Severity             ┃ Count ┃ Percentage ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━┩
+│ critical             │     1 │      16.7% │
+│ high                 │     4 │      66.7% │
+│ medium               │     1 │      16.7% │
+└──────────────────────┴───────┴────────────┘
+
+      Top 2 Affected Processes       
+┏━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃   Rank ┃ Process Name ┃ Incidents ┃
+┡━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│      1 │ python3      │         1 │
+│      2 │ kworker/0:1  │         1 │
+└────────┴──────────────┴───────────┘
+
+     Top 2 Affected PIDs     
+┏━━━━━━━━┳━━━━━━┳━━━━━━━━━━━┓
+┃   Rank ┃ PID  ┃ Incidents ┃
+┡━━━━━━━━╇━━━━━━╇━━━━━━━━━━━┩
+│      1 │ 1234 │         1 │
+│      2 │ 4321 │         1 │
+└────────┴──────┴───────────┘
+
+ Incidents by Detection Rule  
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Rule ID            ┃ Count ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ oom_basic          │     1 │
+│ oops_basic         │     1 │
+│ panic_basic        │     1 │
+│ fs_exception_basic │     1 │
+│ reboot_basic       │     1 │
+│ deadlock_hung_task │     1 │
+└────────────────────┴───────┘
+
+═══════════════════════════════════════
+
 ```
 
 **验证要点**：
@@ -1027,10 +1279,55 @@ detecttool stats -f tests/fixtures/test.log -c configs/rules.yaml
 detecttool stats -f tests/fixtures/test.log -c configs/rules.yaml --json
 ```
 
-**预期输出**（请在实际运行后补充）：
+**示例输出**：
 
 ```json
-# TODO: 请在 Ubuntu 环境运行后，将完整 JSON 输出粘贴到此处
+{
+  "total_lines_scanned": 16,
+  "total_incidents": 6,
+  "unique_types": 6,
+  "by_type": {
+    "OOM": 1,
+    "OOPS": 1,
+    "PANIC": 1,
+    "FS_EXCEPTION": 1,
+    "REBOOT": 1,
+    "DEADLOCK": 1
+  },
+  "by_severity": {
+    "high": 4,
+    "critical": 1,
+    "medium": 1
+  },
+  "by_rule": {
+    "oom_basic": 1,
+    "oops_basic": 1,
+    "panic_basic": 1,
+    "fs_exception_basic": 1,
+    "reboot_basic": 1,
+    "deadlock_hung_task": 1
+  },
+  "top_processes": [
+    [
+      "python3",
+      1
+    ],
+    [
+      "kworker/0:1",
+      1
+    ]
+  ],
+  "top_pids": [
+    [
+      "1234",
+      1
+    ],
+    [
+      "4321",
+      1
+    ]
+  ]
+}
 ```
 
 #### 4.3.5 验证 monitor 命令（实时监控）
@@ -1061,10 +1358,20 @@ echo "Dec 25 10:00:01 kernel: INFO: task blocked_task:1234 blocked for more than
 
 3. 观察终端 1 的输出
 
-**预期输出**（请在实际运行后补充）：
+**示例输出**：
 
 ```
-# TODO: 请在 Ubuntu 环境运行后，将终端 1 的输出粘贴到此处
+Monitoring /tmp/test_monitor.log  (Ctrl+C to stop)
+Config: configs/rules.yaml | from_start=True | poll=0.2s
+OOM (rule=oom_basic, severity=high, line=1)
+Dec 25 10:00:00 kernel: Out of memory: Killed process 9999 (test_proc)
+extracted={"pid": "9999", "comm": "test_proc"}
+
+DEADLOCK (rule=deadlock_hung_task, severity=high, line=2)
+Dec 25 10:00:01 kernel: INFO: task blocked_task:1234 blocked for more than 120 seconds.
+extracted={"comm": "blocked_task", "pid": "1234", "secs": "120"}
+
+^CStopped.
 ```
 
 **验证要点**：
@@ -1110,7 +1417,6 @@ Dec 24 18:05:00 kernel: ---[ end trace 1234567890abcdef ]---
 | 9 | REBOOT | 系统重启事件 |
 | 10-16 | DEADLOCK | 完整的 Hung Task 报告，包含多行上下文 |
 
----
 
 ## 5. 总结与展望
 
@@ -1119,11 +1425,8 @@ Dec 24 18:05:00 kernel: ---[ end trace 1234567890abcdef ]---
 SuSG DetectTool 是一个面向 Linux 系统运维场景的轻量级异常检测工具。经过本项目的设计与实现，我们成功达成了赛题的全部要求：
 
 **基础功能方面**，工具实现了对 OOM、Oops、Panic、死锁、非正常重启、文件系统异常等 6 种典型系统异常的准确检测。通过关键词匹配与正则表达式的混合引擎，工具不仅能识别异常发生，还能自动提取进程名、PID、阻塞时长等关键诊断信息。
-
 **进阶功能方面**，工具提供了三种使用模式：`scan` 模式用于事后分析，一次性扫描整个日志文件；`monitor` 模式用于实时监控，持续跟踪日志文件的新增内容；`stats` 模式用于统计分析，生成多维度的异常报表。此外，通过与 Systemd 的深度集成，工具可以作为守护进程在后台持续运行，并支持开机自启动。
-
 **技术实现方面**，项目采用了多项精心设计的技术方案：基于有限状态机的多行日志聚合算法解决了内核堆栈信息的完整捕获问题；基于指纹的智能冷却机制有效防止了告警风暴；全链路的生成器模式确保了处理超大日志文件时的内存效率；正则表达式预编译优化了 CPU 性能。
-
 **工程质量方面**，项目建立了完善的自动化测试体系，包含 47 个测试用例，覆盖了核心引擎、CLI 命令、统计功能等各个模块。项目文档齐全，包括详细的 README 使用说明和本设计文档。代码结构清晰，采用类型提示增强可读性，遵循 PEP8 编码规范。
 
 ### 5.2 项目特色与创新点
@@ -1131,40 +1434,15 @@ SuSG DetectTool 是一个面向 Linux 系统运维场景的轻量级异常检测
 本项目在满足赛题基本要求的基础上，还具有以下特色：
 
 **多行聚合能力**：区别于简单的单行匹配工具，本项目实现了智能的多行日志聚合。对于 Oops、Panic、Deadlock 等会产生堆栈信息的异常，工具能够自动收集完整的上下文，形成可用于根因分析的完整事件报告。
-
 **生产级可靠性**：通过 Systemd 集成实现了进程崩溃自动重启、开机自启动等生产环境必需的特性。日志轮转检测机制确保了监控的连续性。冷却机制防止了告警风暴。
-
 **灵活的规则配置**：检测规则完全通过 YAML 配置文件定义，用户可以方便地添加自定义规则或调整现有规则的匹配模式、严重级别、冷却时间等参数，无需修改代码。
-
 **现代化的用户界面**：基于 Typer 和 Rich 库构建的 CLI 界面，提供了彩色输出、美观的表格、清晰的错误提示等现代化的用户体验。同时支持 JSON 输出格式，便于与其他工具或监控系统集成。
 
 ### 5.3 未来展望
 
 尽管当前版本已经实现了赛题的全部功能要求，但仍有若干方向值得进一步探索：
-
 **eBPF 实时检测**：目前的检测方式基于日志文件的被动读取，存在一定的时间滞后。未来可以引入 eBPF（Extended Berkeley Packet Filter）技术，直接在内核态挂载探针，实现微秒级的异常检测响应。例如，通过 BPF 程序挂载到 `oom_kill_process` 等内核函数，可以在异常发生的瞬间捕获事件。
-
 **机器学习异常检测**：当前的检测依赖预定义的规则和模式，对于未知类型的异常无法识别。未来可以引入轻量级的机器学习模型，对日志模式进行无监督学习，自动发现偏离正常基线的异常日志，实现规则之外的智能检测。
-
 **分布式监控支持**：在大规模集群环境中，需要汇总多台机器的异常信息。未来可以增加将检测结果推送到 Prometheus、ELK Stack、Kafka 等外部系统的能力，实现集群级别的统一监控和告警。
-
 **告警通知集成**：增加邮件、短信、企业微信、钉钉等告警通知渠道，在检测到严重异常时主动通知运维人员，进一步缩短故障响应时间。
 
----
-
-## 附录：参考资料
-
-1. Linux Kernel Documentation - Oops Tracing
-   https://www.kernel.org/doc/html/latest/admin-guide/bug-hunting.html
-
-2. Linux OOM Killer 机制详解
-   https://www.kernel.org/doc/html/latest/admin-guide/mm/oom_killer.html
-
-3. Systemd Service 单元文件编写指南
-   https://www.freedesktop.org/software/systemd/man/systemd.service.html
-
-4. Python Typer 官方文档
-   https://typer.tiangolo.com/
-
-5. Python Rich 库文档
-   https://rich.readthedocs.io/

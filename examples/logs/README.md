@@ -2,7 +2,7 @@
 
 本目录包含多个示例日志文件，用于演示DetectTool在不同场景下的检测能力。
 
-## 📁 文件列表
+## 文件列表
 
 ### 1. sample.log - 基础示例
 **用途**: 快速演示和测试
@@ -10,12 +10,12 @@
 **适合**: 新手入门、功能验证
 
 **包含的异常**:
-- ✅ OOM (1个)
-- ✅ Oops (1个)
-- ✅ Panic (1个)
-- ✅ Deadlock (1个)
-- ✅ Reboot (1个)
-- ✅ FS_Exception (1个)
+- OOM (1个)
+- Oops (1个)
+- Panic (1个)
+- Deadlock (1个)
+- Reboot (1个)
+- FS_Exception (1个)
 
 **快速测试**:
 ```bash
@@ -181,7 +181,7 @@ detecttool scan -f examples/logs/filesystem_errors.log --json | jq '.[] | select
 
 ---
 
-## 🎯 使用场景建议
+## 使用场景建议
 
 ### 场景1: 快速演示工具功能
 ```bash
@@ -218,7 +218,7 @@ detecttool scan -f examples/logs/filesystem_errors.log
 
 ---
 
-## 📊 统计对比
+##  统计对比
 
 | 文件 | 总行数 | 事件数 | 异常类型数 | 亮点 |
 |------|--------|--------|-----------|------|
@@ -231,7 +231,7 @@ detecttool scan -f examples/logs/filesystem_errors.log
 
 ---
 
-## 💡 测试建议
+## 测试建议
 
 ### 完整测试流程
 ```bash
@@ -262,7 +262,7 @@ time detecttool stats -f examples/logs/oom_storm.log
 
 ---
 
-## 📝 添加自定义示例
+## 添加自定义示例
 
 如果需要添加自己的示例日志：
 
