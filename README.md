@@ -5,9 +5,14 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-47%20passed-brightgreen.svg)](tests/)
+**所选题目**：
+- **ID**：proj407
+- **内容**：设计一个操作系统异常信息检测工具
 
-一个用于Linux系统日志异常检测的命令行工具，支持实时监控和统计分析，帮助运维人员快速发现和定位系统异常事件。
-详细的设计思路、架构图及实现原理等，请参阅/docs下的项目设计文档
+**演示视频**：
+链接: https://pan.baidu.com/s/1QeAtJyTJ-2CZ2lF6zhaw9A?pwd=xcni 提取码: xcni
+**项目设计文档**:
+在本项目的docs文件夹下，[Design.pdf](docs/Design.pdf) 描述详细的设计思路、架构图及实现原理等。
 
 ---
 ## 项目信息
@@ -20,7 +25,7 @@
 - **指导老师**: 刘刚 (andyliu@lzu.edu.cn)
 - **赛题导师**: 宋凯 (songkai01@ieisystem.com)
 - **支持单位**: 浪潮电子信息产业股份有限公司、龙蜥社区
-- **项目链接**: [GitHub](https://github.com/MoGuW666/SuSG2025-DetectTool)
+
 
 ---
 
@@ -491,12 +496,6 @@ detecttool monitor -f /var/log/kern.log --poll 1.0
 - **支持单位**: 浪潮电子信息产业股份有限公司、龙蜥社区
 - **比赛**: 2025年全国大学生计算机系统能力大赛
 
----
 
-## 联系方式
-
-如有问题或建议，请通过以下方式联系：
-
-- **GitHub Issues**: [提交Issue](https://github.com/MoGuW666/SuSG2025-DetectTool/issues)
 
 
